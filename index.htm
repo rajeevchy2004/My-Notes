@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes App</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff9a9e, #2036a4, #b6330f, #e827b1, #a18cd1, #adca20, #06e8f8);
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #585b36, #3a2424, #426b94, #7e1919);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            min-height: 90vh;
+            position: relative;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .app-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f7f1f1;
+        }
+        
+        .search-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            width: 200px;
+            transition: width 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: #e80909;
+            width: 250px;
+        }
+        
+        .search-button {
+            background-color: #ed0bcb;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 15px;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .search-button:hover {
+            background-color: #45a049;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .notes-list {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .note {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .note:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .note-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        
+        .note-content {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .note-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: block;
+        }
+        
+        .add-note-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #14ce1a;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 1000;
+        }
+        
+        .add-note-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.1);
+        }
+        
+        .delete-note {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #d51818;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .note:hover .delete-note {
+            opacity: 1;
+        }
+        
+        .delete-note:hover {
+            background-color: #cc0000;
+        }
+        
+        /* Swipe to delete functionality */
+        .note {
+            touch-action: pan-y;
+            user-select: none;
+        }
+        
+        .note.swiping {
+            transition: transform 0.1s;
+        }
+        
+        .note.deleting {
+            transform: translateX(-100%);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+        }
+
+        /* New note editor container */
+        .new-note-container {
+            display: none;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .new-note-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .new-note-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .new-note-content {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-height: 100px;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        
+        .new-note-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .save-note-btn {
+            background-color: #20a024;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .save-note-btn:hover {
+            background-color: #15b21d;
+        }
+        
+        .cancel-note-btn {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .cancel-note-btn:hover {
+            background-color: #e3390a;
+        }
+        
+        /* Image upload button */
+        .image-upload-btn {
+            background-color: #0885ec;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .image-upload-btn:hover {
+            background-color: #0b7dda;
+        }
+        
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin: 10px 0;
+            display: none;
+        }
+        
+        .remove-image-btn {
+            background-color: #e52424;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            display: none;
+        }
+        
+        .remove-image-btn:hover {
+            background-color: #cc0000;
+        }
+
+        /* Edit note container */
+        .edit-note-container {
+            display: none;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .edit-note-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .edit-note-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .edit-note-content {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-height: 100px;
+            resize: vertical;
+            margin-bottom: 10px;
+        }
+        
+        .edit-note-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .app-container {
+                min-height: 95vh;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 15px;
+            }
+            
+            .app-title {
+                margin-bottom: 10px;
+            }
+            
+            .search-container {
+                width: 100%;
+            }
+            
+            .search-input {
+                flex: 1;
+                width: auto;
+            }
+            
+            .search-input:focus {
+                width: auto;
+            }
+            
+            .notes-list {
+                padding: 10px;
+            }
+            
+            .note {
+                padding: 12px;
+            }
+            
+            .add-note-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+                bottom: 20px;
+                right: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .search-button {
+                padding: 8px 12px;
+                margin-left: 5px;
+            }
+            
+            .note-title {
+                font-size: 16px;
+            }
+            
+            .note-content {
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="app-title">Rajeev Notes</div>
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="Search notes...">
+                <button class="search-button">Search</button>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="notes-list" id="notesList">
+                <!-- New note editor container -->
+                <div class="new-note-container" id="newNoteContainer">
+                    <input type="text" class="new-note-title" id="newNoteTitle" placeholder="Note title">
+                    <textarea class="new-note-content" id="newNoteContent" placeholder="Note content..."></textarea>
+                    <button class="image-upload-btn" id="imageUploadBtn">Add Image</button>
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    <img id="imagePreview" class="image-preview">
+                    <button id="removeImageBtn" class="remove-image-btn">Remove Image</button>
+                    <div class="new-note-actions">
+                        <button class="cancel-note-btn" id="cancelNoteBtn">Cancel</button>
+                        <button class="save-note-btn" id="saveNoteBtn">Add Note</button>
+                    </div>
+                </div>
+                
+                <!-- Edit note container (hidden by default) -->
+                <div class="edit-note-container" id="editNoteContainer">
+                    <input type="text" class="edit-note-title" id="editNoteTitle" placeholder="Note title">
+                    <textarea class="edit-note-content" id="editNoteContent" placeholder="Note content..."></textarea>
+                    <button class="image-upload-btn" id="editImageUploadBtn">Change Image</button>
+                    <input type="file" id="editImageInput" accept="image/*" style="display: none;">
+                    <img id="editImagePreview" class="image-preview">
+                    <button id="removeEditImageBtn" class="remove-image-btn">Remove Image</button>
+                    <div class="edit-note-actions">
+                        <button class="cancel-note-btn" id="cancelEditNoteBtn">Cancel</button>
+                        <button class="save-note-btn" id="saveEditNoteBtn">Save Changes</button>
+                    </div>
+                </div>
+                <!-- Existing notes will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <button class="add-note-btn" id="addNoteBtn">+</button>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const notesList = document.getElementById('notesList');
+            const addNoteBtn = document.getElementById('addNoteBtn');
+            const searchInput = document.querySelector('.search-input');
+            const searchButton = document.querySelector('.search-button');
+            const newNoteContainer = document.getElementById('newNoteContainer');
+            const newNoteTitle = document.getElementById('newNoteTitle');
+            const newNoteContent = document.getElementById('newNoteContent');
+            const saveNoteBtn = document.getElementById('saveNoteBtn');
+            const cancelNoteBtn = document.getElementById('cancelNoteBtn');
+            
+            // Image upload elements for new notes
+            const imageUploadBtn = document.getElementById('imageUploadBtn');
+            const imageInput = document.getElementById('imageInput');
+            const imagePreview = document.getElementById('imagePreview');
+            const removeImageBtn = document.getElementById('removeImageBtn');
+            
+            const editNoteContainer = document.getElementById('editNoteContainer');
+            const editNoteTitle = document.getElementById('editNoteTitle');
+            const editNoteContent = document.getElementById('editNoteContent');
+            const saveEditNoteBtn = document.getElementById('saveEditNoteBtn');
+            const cancelEditNoteBtn = document.getElementById('cancelEditNoteBtn');
+            
+            // Image upload elements for editing notes
+            const editImageUploadBtn = document.getElementById('editImageUploadBtn');
+            const editImageInput = document.getElementById('editImageInput');
+            const editImagePreview = document.getElementById('editImagePreview');
+            const removeEditImageBtn = document.getElementById('removeEditImageBtn');
+            
+            let notes = JSON.parse(localStorage.getItem('notes')) || [];
+            let noteCounter = notes.length > 0 ? Math.max(...notes.map(note => note.id)) + 1 : 1;
+            let currentlyEditingId = null;
+            let currentImageDataUrl = null;
+            let currentEditImageDataUrl = null;
+            
+            // Initialize the app
+            renderNotes(notes);
+            
+            // Add new note button click
+            addNoteBtn.addEventListener('click', function() {
+                hideEditContainer();
+                newNoteContainer.classList.add('active');
+                newNoteTitle.value = '';
+                newNoteContent.value = '';
+                currentImageDataUrl = null;
+                imagePreview.style.display = 'none';
+                removeImageBtn.style.display = 'none';
+                newNoteTitle.focus();
+            });
+            
+            // Image upload for new note
+            imageUploadBtn.addEventListener('click', function() {
+                imageInput.click();
+            });
+            
+            imageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        currentImageDataUrl = event.target.result;
+                        imagePreview.src = currentImageDataUrl;
+                        imagePreview.style.display = 'block';
+                        removeImageBtn.style.display = 'inline-block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            removeImageBtn.addEventListener('click', function() {
+                currentImageDataUrl = null;
+                imagePreview.style.display = 'none';
+                removeImageBtn.style.display = 'none';
+                imageInput.value = '';
+            });
+            
+            // Image upload for edit note
+            editImageUploadBtn.addEventListener('click', function() {
+                editImageInput.click();
+            });
+            
+            editImageInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        currentEditImageDataUrl = event.target.result;
+                        editImagePreview.src = currentEditImageDataUrl;
+                        editImagePreview.style.display = 'block';
+                        removeEditImageBtn.style.display = 'inline-block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            removeEditImageBtn.addEventListener('click', function() {
+                currentEditImageDataUrl = null;
+                editImagePreview.style.display = 'none';
+                removeEditImageBtn.style.display = 'none';
+                editImageInput.value = '';
+            });
+            
+            // Save new note
+            saveNoteBtn.addEventListener('click', function() {
+                const title = newNoteTitle.value.trim() || `Note ${notes.length + 1}`;
+                const content = newNoteContent.value.trim() || 'Click to edit this note...';
+                
+                const newNote = {
+                    id: noteCounter++,
+                    title: title,
+                    content: content,
+                    image: currentImageDataUrl,
+                    timestamp: new Date().toISOString()
+                };
+                
+                notes.unshift(newNote);
+                saveNotes();
+                renderNotes(notes);
+                
+                // Hide the editor and reset fields
+                newNoteContainer.classList.remove('active');
+                currentImageDataUrl = null;
+                imageInput.value = '';
+            });
+            
+            // Cancel new note
+            cancelNoteBtn.addEventListener('click', function() {
+                newNoteContainer.classList.remove('active');
+                currentImageDataUrl = null;
+                imageInput.value = '';
+            });
+            
+            // Save edited note
+            saveEditNoteBtn.addEventListener('click', function() {
+                if (!currentlyEditingId) return;
+                
+                const title = editNoteTitle.value.trim() || `Note ${notes.length + 1}`;
+                const content = editNoteContent.value.trim() || 'Click to edit this note...';
+                
+                const noteIndex = notes.findIndex(n => n.id === currentlyEditingId);
+                if (noteIndex !== -1) {
+                    notes[noteIndex].title = title;
+                    notes[noteIndex].content = content;
+                    
+                    // Only update image if a new one was selected or removed
+                    if (currentEditImageDataUrl !== undefined) {
+                        notes[noteIndex].image = currentEditImageDataUrl;
+                    }
+                    
+                    saveNotes();
+                    renderNotes(notes);
+                }
+                
+                hideEditContainer();
+            });
+            
+            // Cancel edit note
+            cancelEditNoteBtn.addEventListener('click', function() {
+                hideEditContainer();
+            });
+            
+            // Search functionality
+            searchButton.addEventListener('click', searchNotes);
+            searchInput.addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    searchNotes();
+                }
+            });
+            
+            function searchNotes() {
+                const searchTerm = searchInput.value.toLowerCase();
+                if (searchTerm.trim() === '') {
+                    renderNotes(notes);
+                    return;
+                }
+                
+                const filteredNotes = notes.filter(note => 
+                    note.title.toLowerCase().includes(searchTerm) || 
+                    note.content.toLowerCase().includes(searchTerm)
+                );
+                
+                renderNotes(filteredNotes);
+            }
+            
+            // Render notes to the DOM
+            function renderNotes(notesToRender) {
+                // Clear existing notes (except the containers)
+                const existingNotes = notesList.querySelectorAll('.note');
+                existingNotes.forEach(note => note.remove());
+                
+                if (notesToRender.length === 0) {
+                    const noNotesMsg = document.createElement('p');
+                    noNotesMsg.style.textAlign = 'center';
+                    noNotesMsg.style.color = '#999';
+                    noNotesMsg.textContent = 'No notes found. Click the + button to add a new note.';
+                    notesList.appendChild(noNotesMsg);
+                    return;
+                }
+                
+                notesToRender.forEach(note => {
+                    const noteElement = document.createElement('div');
+                    noteElement.className = 'note';
+                    noteElement.setAttribute('data-id', note.id);
+                    
+                    let imageHtml = '';
+                    if (note.image) {
+                        imageHtml = `<img src="${note.image}" class="note-image" alt="Note image">`;
+                    }
+                    
+                    noteElement.innerHTML = `
+                        <div class="note-title">${note.title}</div>
+                        ${imageHtml}
+                        <div class="note-content">${note.content}</div>
+                        <button class="delete-note" data-id="${note.id}">×</button>
+                    `;
+                    
+                    // Insert after the containers
+                    notesList.appendChild(noteElement);
+                    
+                    // Add click event to edit note
+                    noteElement.addEventListener('click', function(e) {
+                        if (!e.target.classList.contains('delete-note') && !e.target.classList.contains('note-image')) {
+                            editNote(note.id);
+                        }
+                    });
+                    
+                    // Add delete button event
+                    const deleteBtn = noteElement.querySelector('.delete-note');
+                    deleteBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        deleteNote(note.id);
+                    });
+                    
+                    // Add swipe to delete functionality
+                    setupSwipeToDelete(noteElement, note.id);
+                });
+            }
+            
+            // Edit note
+            function editNote(noteId) {
+                const note = notes.find(n => n.id === noteId);
+                if (!note) return;
+                
+                currentlyEditingId = noteId;
+                editNoteTitle.value = note.title;
+                editNoteContent.value = note.content;
+                
+                // Handle image in edit mode
+                currentEditImageDataUrl = note.image || null;
+                if (note.image) {
+                    editImagePreview.src = note.image;
+                    editImagePreview.style.display = 'block';
+                    removeEditImageBtn.style.display = 'inline-block';
+                } else {
+                    editImagePreview.style.display = 'none';
+                    removeEditImageBtn.style.display = 'none';
+                }
+                editImageInput.value = '';
+                
+                // Hide new note container if open
+                newNoteContainer.classList.remove('active');
+                
+                // Show edit container
+                editNoteContainer.classList.add('active');
+                editNoteTitle.focus();
+            }
+            
+            // Hide edit container
+            function hideEditContainer() {
+                editNoteContainer.classList.remove('active');
+                currentlyEditingId = null;
+                currentEditImageDataUrl = undefined;
+                editImageInput.value = '';
+            }
+            
+            // Delete note
+            function deleteNote(noteId) {
+                notes = notes.filter(note => note.id !== noteId);
+                saveNotes();
+                
+                const noteElement = document.querySelector(`.note[data-id="${noteId}"]`);
+                if (noteElement) {
+                    noteElement.classList.add('deleting');
+                    setTimeout(() => {
+                        renderNotes(notes);
+                    }, 300);
+                }
+                
+                // If deleting the note being edited, hide the edit container
+                if (currentlyEditingId === noteId) {
+                    hideEditContainer();
+                }
+            }
+            
+            // Swipe to delete functionality
+            function setupSwipeToDelete(element, noteId) {
+                let touchStartX = 0;
+                let touchEndX = 0;
+                let isSwiping = false;
+                
+                element.addEventListener('touchstart', function(e) {
+                    touchStartX = e.changedTouches[0].screenX;
+                    element.classList.add('swiping');
+                }, {passive: true});
+                
+                element.addEventListener('touchmove', function(e) {
+                    touchEndX = e.changedTouches[0].screenX;
+                    const diff = touchEndX - touchStartX;
+                    
+                    if (diff < 0 && Math.abs(diff) > 10) {
+                        isSwiping = true;
+                        element.style.transform = `translateX(${diff}px)`;
+                    }
+                }, {passive: true});
+                
+                element.addEventListener('touchend', function() {
+                    element.classList.remove('swiping');
+                    
+                    if (isSwiping) {
+                        const diff = touchEndX - touchStartX;
+                        
+                        if (diff < -100) { // Swiped left enough to delete
+                            deleteNote(noteId);
+                        } else {
+                            element.style.transform = '';
+                        }
+                    }
+                    
+                    isSwiping = false;
+                    touchStartX = 0;
+                    touchEndX = 0;
+                }, {passive: true});
+            }
+            
+            // Save notes to localStorage
+            function saveNotes() {
+                localStorage.setItem('notes', JSON.stringify(notes));
+            }
+        });
+    </script>
+</body>
+</html>
